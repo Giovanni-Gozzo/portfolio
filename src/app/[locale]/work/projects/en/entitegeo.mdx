@@ -1,0 +1,53 @@
+---
+title: "Indexation Automatique des Entités Géographiques par Modèles Hybrides"
+publishedAt: "2025-05-01"
+summary: "Développement d'une solution d'IA ciblée pour l'indexation semi-automatisée des notices bibliographiques par entités géographiques RAMEAU. Ce projet a nécessité la gestion de données complexes dans les zones MARC et l'implémentation d'une évaluation hybride (LLM + base de connaissances)."
+images:
+  - "/images/projects/Entitegeo/1.png"
+team:
+  - name: "Giovanni Gozzo"
+    role: "Développeur IA (Alternance ABES)"
+    avatar: "/images/team/Giovanni.png"
+    linkedIn: "https://www.linkedin.com/in/giovanni-gozzo/"
+---
+
+# Indexation Automatique des Entités Géographiques
+
+## 1. Problématique Spécifique
+
+Après le genre/forme, l'indexation des **entités géographiques** (villes, régions, pays, lieux historiques) est une source majeure de complexité dans le catalogage. L'attribution précise d'un descripteur RAMEAU géographique dépend souvent du contexte et des informations situées dans des **zones MARC spécifiques**.
+
+L'objectif était de créer un service capable de suggérer des autorités géographiques pertinentes en se basant sur le contenu textuel de la notice, tout en gérant les ambiguïtés régionales et les nuances des données.
+
+## 2. Extraction et Traitement des Données Géographiques
+
+### 2.1. Cible des Données
+* **Extraction Sélective** : Le pipeline a été configuré pour cibler spécifiquement les zones de la notice bibliographique pertinentes pour la géographie.
+* **Gestion des Volumes** : Comme pour le projet de genre/forme, l'extraction a nécessité une optimisation des requêtes **PL/SQL sur la base Oracle** pour isoler rapidement les notices ayant déjà des descripteurs géographiques comme vérité terrain.
+
+### 2.2. Prétraitement et Désambiguïsation
+* **Nettoyage Contextuel** : Un travail spécifique a été mené pour éliminer les informations entre parenthèses dans les descripteurs (souvent des précisions temporelles ou régionales), afin de ne conserver que l'entité géographique principale pour le modèle. L'objectif est de ne pas biaiser le modèle avec des informations qui pourraient être plus précises que l'entité que nous cherchons.
+* **Lemmatisation Avancée** : Utilisation de la lemmatisation pour standardiser les termes géographiques, même ceux qui apparaissent dans des contextes textuels différents.
+
+## 3. Approche par Évaluation Hybride (LLM + Base de Connaissances)
+
+Étant donné la nature hiérarchique et contextuelle des entités géographiques, une approche de Machine Learning pur a été complétée par une méthode hybride impliquant un Large Language Model (LLM).
+
+### 3.1. Mécanisme de l'Évaluation Hybride
+1.  **Prédiction LLM** : Un LLM (ex: Gemini) est sollicité pour prédire les entités géographiques à partir du résumé et du titre de la notice.
+2.  **Vérification de Cohérence (Knowledge Base)** : La prédiction du LLM est ensuite confrontée aux **données d'autorité Sudoc** (champs 606 et 607) existantes dans la base.
+3.  **Filtrage et Validation** : Seules les entités prédites par le LLM qui sont *également* trouvées ou fortement corrélées dans les descripteurs existants de la base de données sont retenues.
+
+Ce processus garantit que la prédiction est non seulement plausible sémantiquement, mais qu'elle respecte également le **Plan Comptable Général (PCG) des autorités** de l'ABES.
+
+## 4. Technologies et Résultats
+
+### 🛠️ Technologies Clés
+* **Extraction & DB** : Oracle, PL/SQL, Python (Pandas).
+* **IA & NLP** : Hugging Face (Embeddings e5), LLMs (Gemini, Llama3), Scikit-Learn.
+* **Logique Hybride** : Développement de scripts Python pour la logique de confrontation des résultats LLM avec les données de la base.
+
+### Résultats et Perspectives
+* **Augmentation de la Précision** : L'approche hybride a montré une meilleure performance que l'IA simple sur les entités géographiques, en raison de la capacité du LLM à contextualiser et de la vérification par la base de connaissances.
+* **Accélération du Workflow** : Le service a prouvé sa capacité à fournir des suggestions d'entités géographiques précises en quelques secondes, réduisant le temps d'indexation manuelle.
+* **Prochaine Étape** : L'intégration de ce service d'indexation géographique dans l'API de déploiement.

@@ -1,0 +1,127 @@
+---
+title: "Pipeline d'Indexation Sémantique et Classification par IA pour l'ABES"
+publishedAt: "2025-04-22"
+summary: "Conception, développement et validation d'un pipeline d'Intelligence Artificielle de bout en bout, visant l'indexation automatique du genre et de la forme des notices bibliographiques. Ce projet a nécessité l'optimisation des requêtes sur une base Oracle de plus de 10 milliards de lignes, l'utilisation d'embeddings sémantiques et le finetuning de modèles de Machine Learning (ML) et de Large Language Models (LLMs)."
+images:
+  - "/images/projects/ABESTF8/3.png"
+team:
+  - name: "Giovanni Gozzo"
+    role: "Développeur IA (Alternance ABES)"
+    avatar: "/images/team/Giovanni.png"
+    linkedIn: "https://www.linkedin.com/in/giovanni-gozzo/"
+---
+
+# Pipeline d'Indexation Automatisée Basé sur l'Intelligence Artificielle
+
+## 1. Contexte et Problématique Métier à l'ABES
+
+Ce projet a été mené au sein du laboratoire de l'**ABES (Agence bibliographique de l'enseignement supérieur)**, organisme chargé de la gestion du catalogue **Sudoc** (Système Universitaire de Documentation), qui centralise les collections des bibliothèques universitaires françaises.
+
+Le défi majeur pour les catalogueurs est l'attribution manuelle et chronophage des **descripteurs RAMEAU** (Répertoire d'Autorité Matière Encyclopédique, Alphabétique et Unifié), notamment la classification par **genre ou forme** des ouvrages (exemples : "bandes dessinées", "romans", "thèses"). Une mauvaise indexation impacte directement la recherche documentaire par les utilisateurs finaux.
+
+L'objectif de cette alternance était de concevoir un **pipeline d'IA robuste** capable de :
+1.  Gérer l'extraction de données complexes à partir d'une **base de données Oracle massive**.
+2.  Appliquer des techniques de **Traitement Automatique du Langage Naturel (NLP)** pour dégager la sémantique.
+3.  Proposer des **classifications automatiques** pour accélérer le travail des experts.
+
+## 2. Architecture du Pipeline d'Indexation (Conception Technique)
+
+Le projet s'articule autour d'un pipeline en trois phases principales : l'extraction et le prétraitement, la vectorisation sémantique, et la classification par Machine Learning.
+
+### 2.1. Extraction et Préparation des Données Massives
+
+La première étape, la plus critique, concerne la gestion de la base de données Oracle, contenant **plus de 10 milliards de lignes**.
+
+* **Optimisation des Requêtes SQL** : Afin de surmonter les lenteurs inhérentes aux requêtes sur une telle volumétrie, une méthode d'extraction par **segmentation des appels SQL** a été adoptée. Au lieu d'utiliser des `LEFT JOIN` coûteux et longs, le pipeline assemble les résultats de plusieurs petites requêtes en mémoire avec la librairie Pandas.
+* **Nettoyage et Feature Engineering** :
+    * **Normalisation** : Uniformisation des données textuelles.
+    * **Lemmatisation** : Utilisation d'un `lemmatizer` pour réduire les mots à leur racine (forme canonique), améliorant ainsi la qualité du jeu de données pour l'apprentissage.
+    * **Enrichissement** : Traduction des codes bibliographiques bruts (tels que ceux de la zone 008) en libellés explicites, fournissant des *features* plus riches au modèle.
+
+### 2.2. Vectorisation Sémantique (Embeddings)
+
+La conversion du texte traité en un format numérique exploitable par les algorithmes de Machine Learning est essentielle.
+
+* **Limites des Approches Traditionnelles** : Les méthodes classiques comme Bag-of-Words ou TF-IDF ont été écartées pour leur incapacité à capturer la **sémantique** et le **contexte** des descripteurs RAMEAU.
+* **Adoption des Embeddings** : Le choix s'est porté sur les **embeddings de phrases** (Sentence Embeddings) basés sur des modèles *Transformer*. Les modèles **e5-large** et **e5-small** ont été privilégiés pour leur performance sémantique et leur capacité à générer des représentations vectorielles de haute qualité.
+* **Analyse en Composantes Principales (PCA/LDA)** : Pour visualiser la qualité des embeddings et confirmer la séparabilité des classes, des techniques de réduction de dimensionnalité telles que la **Linear Discriminant Analysis (LDA)** ont été appliquées.
+
+![2D](/images/projects/ABESTF8/3.png)
+![3D](/images/projects/ABESTF8/4.png)
+
+
+### 2.3. Classification par Modèles Supervisés
+
+Plusieurs algorithmes ont été évalués pour déterminer la meilleure performance en classification multi-étiquette.
+
+* **Comparaison des Modèles** : Les modèles testés incluent :
+    * **Support Vector Classifier (SVC)**
+    * **K-Nearest Neighbors (KNN)**
+    * **Random Forest (RF)**
+    * **Régression Logistique (LR)**
+* **Choix Final** : La **Régression Logistique** a offert le meilleur compromis entre une haute performance, une vitesse d'entraînement rapide et une faible consommation de ressources, rendant le pipeline industrialisable.
+* **Hyperparamètres et Finetuning** : L'optimisation des hyperparamètres a été réalisée de manière systématique en utilisant la méthode **GridSearchCV** pour garantir une performance maximale du modèle sélectionné.
+
+
+## 3. Exploration des Large Language Models (LLMs)
+
+Parallèlement aux modèles de Machine Learning classiques, une exploration a été menée sur les capacités des Modèles de Langage (LLMs) pour la même tâche.
+
+* **Modèles Open Source Testés** : **Llama3** a été évalué pour sa capacité à contextualiser et à prédire les genres/formes.
+* **Performances de Gemini** : Des tests avec **Gemini 2.0 Flash** ont démontré des résultats très prometteurs en termes de précision, consolidant l'idée d'une **approche hybride** où l'IA traditionnelle (ML) pourrait être enrichie ou remplacée par des LLMs spécialisés.
+* **Potentiel du RAG** : L'intégration future du **RAG (Retrieval-Augmented Generation)** est la perspective principale. En injectant le vocabulaire RAMEAU dans une base de données vectorielle, les LLMs pourraient être personnalisés pour référencer uniquement les descripteurs officiels de l'ABES, améliorant drastiquement la précision contextuelle.
+
+## 4. Résultats et Validation Scientifique
+
+Le modèle final a été validé non seulement par des métriques informatiques, mais surtout par l'expertise des bibliothécaires.
+
+![humaine](/images/projects/ABESTF8/2.png)
+
+
+### Performances du Modèle
+Sur le jeu de données des 5 classes les plus fréquentes, le modèle de Régression Logistique a atteint des scores élevés :
+* **Recall (Rappel) Moyen : 0,92**
+* **Précision Moyenne : 0,85**
+
+![Metrique](/images/projects/ABESTF8/1.png)
+
+Ces résultats confirment la capacité du pipeline à identifier correctement la grande majorité des ouvrages, tout en maintenant une faible proportion de fausses classifications.
+
+### Validation Humaine
+La validation par les experts métier a souligné un point essentiel : la notion de "bonne" classification est relative. Dans certains cas, le modèle a proposé une classification non identique à la classification initiale du Sudoc, mais considérée comme **valide et acceptable** par le bibliothécaire. Cette nuance justifie le rôle de l'outil comme une **aide à la décision** plutôt qu'un remplacement total de l'expertise humaine.
+
+
+## 5. Défis, Enseignements et Perspectives
+
+### Défis Techniques Relevés
+1.  **Explosion de la Volumétrie** : Maîtriser l'interfaçage avec la base Oracle massive et concevoir des requêtes efficaces pour l'extraction de dizaines de millions de notices.
+2.  **Ressources et Temps de Calcul** : Réduire le temps d'exécution lié à l'utilisation de modèles d'embeddings et de LLMs, nécessitant parfois l'accès à un serveur OVH avec accélération GPU.
+3.  **Spécificité du Vocabulaire RAMEAU** : Adapter les modèles de langage à la complexité et à la granularité du système de classification bibliographique français.
+
+### Compétences Clés Développées
+* **Deep Learning & NLP** : Maîtrise des embeddings, lemmatisation, et architecture des modèles de classification.
+* **Optimisation Systèmes** : Expertise en optimisation SQL et en gestion des données distribuées.
+* **Gestion de Projet** : Pilotage du projet en autonomie au sein du Labo, incluant des phases de recherche, d'expérimentation et de validation.
+
+### Perspectives Futures
+
+Le projet laisse entrevoir de fortes perspectives d'évolution pour l'ABES, notamment l'intégration du système dans le flux de travail quotidien pour alléger la charge des bibliothécaires.
+
+---
+
+## 🛠️ Technologies Clés du Projet
+
+### 💻 Langages & Frameworks
+* **Python, Scikit-Learn, Pandas** : Langage principal de développement, construction du modèle Machine Learning (ML), et manipulation/nettoyage des DataFrames pour gérer les données massives.
+
+### 🤖 NLP & Large Language Models (LLMs)
+* **Hugging Face (Transformers), spaCy, LangChain** : Outils utilisés pour la génération des **embeddings sémantiques** (modèles e5-large/small), la **lemmatisation**, et l'interface d'expérimentation avec les LLMs (Llama3, Gemini).
+
+### 🗄️ Bases de Données & Gestion
+* **Oracle (Base Sudoc), SQL, PL/SQL** : Base de données centrale de l'ABES, utilisée pour l'extraction optimisée des données du catalogue bibliographique massif.
+
+### 🧠 Machine Learning & Algorithmes
+* **Régression Logistique (LR), SVC, KNN, Random Forest** : Algorithmes de classification supervisée testés et comparés, avec la Régression Logistique fournissant les résultats les plus prometteurs pour l'indexation multi-étiquette.
+
+### 📊 Optimisation & Visualisation
+* **GridSearchCV, Hyperopt, Matplotlib, Seaborn, LDA/PCA** : Outils cruciaux pour le *finetuning* des hyperparamètres, et pour l'analyse et la **visualisation 3D/2D des clusters sémantiques** des embeddings.

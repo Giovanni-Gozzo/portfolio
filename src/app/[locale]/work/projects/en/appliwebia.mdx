@@ -1,0 +1,391 @@
+---
+title: "Développement d’une API IA et d’une Application Web pour le Catalogage Automatisé"
+publishedAt: "2025-06-15"
+summary: "Conception d’une API FastAPI multi-services et d’une application web Vue/Nuxt pour automatiser une grande partie du catalogage bibliographique à partir d’images de livres. L’outil assiste les catalogueurs de l’ABES en transformant un travail manuel de plusieurs minutes en un flux semi-automatique de quelques secondes."
+images:
+  - "/images/projects/giocat/1.png"
+team:
+  - name: "Giovanni Gozzo"
+    role: "Développeur IA (Alternance ABES)"
+    avatar: "/images/team/Giovanni.png"
+    linkedIn: "https://www.linkedin.com/in/giovanni-gozzo/"
+---
+
+# 3. Développement d’une API basée sur l’IA et d’une application web
+
+L’objectif de cette phase du projet est de **mettre l’intelligence artificielle directement au service des catalogueurs**.
+Aujourd’hui, un catalogueur doit parcourir un ouvrage **page par page** (couverture, quatrième de couverture, pages de titre, mentions légales, etc.) pour en extraire manuellement :
+
+- le **titre** et le **sous-titre**
+- les **mentions de responsabilité** (auteurs, traducteurs, illustrateurs…)
+- l’**éditeur**, l’**année de publication**, l’**ISBN**, le **prix**, etc.
+
+Cette tâche est répétitive, longue, et mobilise une forte expertise pour transformer ces informations dispersées en une **notice bibliographique structurée**.
+
+L’application web que j’ai développée propose un nouveau flux de travail :
+
+1. Le bibliothécaire **prend des photos** des différentes parties du livre (couverture, pages intérieures, mentions légales, etc.) directement dans l’interface.
+2. Les images sont envoyées à une **API IA** qui analyse automatiquement le document (vision + LLM) pour **extraire et structurer les métadonnées**.
+3. La notice bibliographique est générée en **quelques secondes** suivant le modèle `BiblioNotice`.
+4. Le bibliothécaire **vérifie, corrige, enrichit**, puis valide la notice.
+
+👉 On passe d’une tâche manuelle de plusieurs minutes à un **processus semi-automatisé de quelques secondes**, laissant au professionnel le temps :
+- soit de **traiter plus de livres** dans sa journée,
+- soit de **produire des notices plus riches** (plus de sujets, de genres, d’entités géographiques, etc.), améliorant directement la **qualité de la recherche** pour les usagers finaux.
+
+Pour rendre cela possible de façon robuste et industrialisable, j’ai fait le choix de développer une **API spécifique** et une **application web dédiée**, adaptées aux contraintes de l’ABES.
+
+---
+
+## 3.1 Contexte et problématique de l'application
+
+### 3.1.1 Besoins utilisateurs et cas d’usage du catalogage bibliographique
+
+Le flux de travail traditionnel de catalogage repose sur une série d’**opérations intellectuelles complexes** que le bibliothécaire doit maîtriser. On peut le découper en **quatre grandes étapes** (qui, en pratique, s’entremêlent souvent) :
+
+1. **Extraction d’informations factuelles à partir du support physique**
+
+   Le catalogueur inspecte l’ouvrage sous toutes ses faces :
+
+   - couverture principale et quatrième de couverture
+   - pages de garde et pages de titre
+   - mentions légales, colophon, dos du livre, parfois même les tranches
+
+   Il y **repère** et **recopie** les éléments bibliographiques essentiels :
+
+   - titre principal et sous-titre
+   - mentions de responsabilité (auteurs, traducteurs, illustrateurs…)
+   - informations d’édition (lieu, éditeur, date)
+   - ISBN, prix, collection, etc.
+
+   Dans l’application, cette étape est **modélisée par l’analyse visuelle des images** du document : les photographies des différentes zones du livre sont traitées par un LLM vision qui “lit” le contenu visuel et en extrait les données bibliographiques.
+
+2. **Analyse intellectuelle du contenu**
+
+   Il ne suffit pas de décrire l’objet, il faut aussi comprendre **de quoi il parle**. Le catalogueur :
+
+   - lit les **résumés**, les **tables des matières**, les **quatrièmes de couverture**,
+   - feuillette parfois l’ouvrage,
+   - identifie les **thématiques principales et secondaires**.
+
+   C’est cette analyse qui permet de choisir les **sujets**, les **genres**, les **formes**, et de qualifier intellectuellement le document, au-delà de ses simples caractéristiques descriptives.
+
+3. **Structuration dans un format bibliographique (MARC21, etc.)**
+
+   Toutes les informations extraites doivent ensuite être **placées dans les bons champs** du format bibliographique, en respectant :
+
+   - les règles de catalogage,
+   - la logique du modèle de données,
+   - la cohérence avec les référentiels.
+
+   L’application s’appuie ici sur un **modèle de données structuré, `BiblioNotice`**, qui sert de “notice pivot” simplifiée, compatible avec les standards bibliographiques tout en restant maniable pour un prototype applicatif.
+
+4. **Normalisation et indexation contrôlée**
+
+   Enfin, les données doivent être **normalisées** :
+
+   - réécriture des dates, des noms d’auteurs,
+   - attribution de codes de fonction,
+   - indexation matière via des vocabulaires contrôlés (par ex. **RAMEAU**),
+   - utilisation d’autorités IdRef pour les personnes, collectivités, lieux, etc.
+
+---
+
+L’objectif de l’application est de **reproduire de manière semi-automatique les deux premières étapes** (extraction visuelle + compréhension du contenu) à partir des représentations visuelles du livre :
+
+- Le système extrait automatiquement les informations visibles sur les images.
+- Le bibliothécaire peut compléter avec du texte libre (par exemple un résumé plus détaillé ou des corrections d’éléments mal lus par le modèle).
+- La notice est ensuite structurée dans le modèle `BiblioNotice` et peut être enrichie avec des entités spécifiques (genres/formes, entités géographiques, sujets RAMEAU).
+
+Ce système d’**enrichissement automatique** :
+
+- **améliore la découvrabilité** des ressources dans les catalogues en ligne,
+- multiplie les **points d’accès** (thématiques, géographiques, typologiques),
+- **ne rajoute pas de charge** significative au bibliothécaire, qui reste au centre de la validation.
+
+---
+
+### 3.1.2 Contraintes du domaine ABES et intégration dans l’écosystème existant
+
+Le projet s’inscrit dans l’environnement technique et organisationnel très structuré de l’ABES, ce qui impose plusieurs contraintes fortes.
+
+#### Intégration avec IdRef et le réseau SUDOC
+
+- La base **IdRef** joue le rôle de **référentiel central d’autorités** pour l’ensemble du réseau SUDOC.
+- L’application doit donc être capable de :
+  - **interroger IdRef** (via des requêtes HTTP simples sur les web services IdRef),
+  - proposer aux utilisateurs **des autorités existantes avec PPN**,
+  - **lier** les notices bibliographiques aux autorités validées.
+
+Dans l’interface, le catalogueur peut :
+
+- rechercher manuellement une autorité,
+- sélectionner la bonne notice IdRef,
+- injecter automatiquement le **PPN** et les informations normalisées dans la `BiblioNotice`.
+
+#### Modèle de données `BiblioNotice` et validation stricte
+
+Pour respecter les standards de qualité ABES, j’ai conçu un modèle structuré appelé **`BiblioNotice`** :
+
+- Il s’agit d’un **formulaire numérique fortement typé** qui définit précisément :
+  - quels champs sont disponibles,
+  - de quel type ils sont (texte, nombre, liste, etc.),
+  - s’ils sont obligatoires ou facultatifs.
+- Ce modèle est implémenté via **Pydantic** côté API, ce qui permet :
+  - une **validation automatique** des données entrantes/sortantes,
+  - un blocage immédiat des formats incorrects (par exemple un ISBN invalide, une date mal formée, etc.).
+
+La `BiblioNotice` comprend notamment :
+
+- `titre`, `sous_titre`, `auteurs`, `traducteurs`, `illustrateurs`,
+- `editeur`, `annee_publication`, `ISBN`, `prix`,
+- ainsi que divers champs d’enrichissement (sujets, genres/formes, entités géographiques…).
+
+C’est une **version simplifiée et opérationnelle** des formats bibliographiques complets (comme **MARC21**, qui comporte plusieurs centaines de zones spécialisées).
+
+---
+
+### 3.1.3 Objectifs d’enrichissement multi-modal
+
+Le catalogage repose sur des informations **multiformes** :
+
+- textes imprimés, logos, codes-barres, mentions en petits caractères,
+- résumés, tables des matières, etc.
+
+L’approche retenue est donc **multi-modale** :
+
+- **Vision** : des modèles IA avec capacités de vision “lisent” les images du livre et extraient les métadonnées textuelles visibles.
+- **Texte** : un champ textuel complémentaire permet au bibliothécaire de :
+  - ajouter des informations absentes des images,
+  - corriger ou enrichir le résumé,
+  - préciser des éléments intellectuels difficiles à extraire automatiquement.
+
+L’application enrichit systématiquement chaque notice avec :
+
+- des **entités géographiques**,
+- des **genres/formes bibliographiques**,
+- des **sujets thématiques** (RAMEAU).
+
+Le système :
+
+- explique ses choix (traçabilité des enrichissements),
+- indique ses **sources** (ex. : champ ou image d’où vient l’info),
+- permet à l’utilisateur de **valider ou corriger** chaque proposition.
+
+👉 On obtient un fonctionnement **collaboratif** :
+l’IA automatise les tâches répétitives et lourdes, tandis que l’expertise humaine garantit la qualité finale et la cohérence métier.
+
+---
+
+## 3.2 Analyse de l’environnement technique spécifique
+
+### 3.2.1 Architecture distribuée et microservices
+
+L’application repose sur une **architecture distribuée en microservices**, ce qui permet :
+
+- de **séparer clairement les responsabilités** entre les différents composants,
+- de faciliter la **scalabilité**, la **maintenance** et la **résilience**,
+- de faire évoluer indépendamment chaque brique d’enrichissement.
+
+Les principaux composants sont :
+
+1. **Backend principal (FastAPI, port 8000)**
+   - Point d’entrée central de l’application.
+   - Orchestration de l’ensemble des traitements **multi-modaux**.
+   - Regroupe :
+     - l’analyse d’images via des LLM vision,
+     - l’extraction automatique des métadonnées,
+     - la génération d’une `BiblioNotice` complète.
+
+2. **Proxy d’orchestration (FastAPI, port 8100)**
+   - Sert de **façade unique** pour toutes les API d’enrichissement spécialisées.
+   - Gère :
+     - le routage intelligent des requêtes,
+     - l’uniformisation des formats de réponse,
+     - la gestion des erreurs et des délais.
+   - Permet au frontend de **ne pas se soucier** des détails techniques de chaque service spécialisé.
+
+3. **APIs spécialisées d’enrichissement**
+   - **Extraction d’entités géographiques** (port 8001)
+     - Réutilise le pipeline développé pour la détection d’entités géographiques RAMEAU.
+   - **Extraction de genres et formes bibliographiques** (port 8002)
+     - Analyse les métadonnées pour identifier les types documentaires.
+   - **Extraction de sujets RAMEAU** (port 8066)
+     - Propose des indexations thématiques basées sur des modèles spécialisés.
+
+Cette **séparation fonctionnelle** permet :
+
+- d’ajouter facilement de nouveaux services (par exemple entités temporelles, personnes citées),
+- d’optimiser chaque pipeline de manière ciblée,
+- de limiter l’impact d’un incident localisé sur le reste du système.
+
+---
+
+### 3.2.2 Stack technologique (FastAPI, Vue.js/Nuxt, LLM multi-provider)
+
+#### Backend : FastAPI et orchestration IA
+
+Le choix de **FastAPI** répond à plusieurs contraintes :
+
+- **Performance et asynchronisme** : idéal pour des flux impliquant :
+  - appels multiples aux APIs de LLM,
+  - traitements d’images,
+  - I/O réseau intensives.
+- **Typage fort et validation** avec **Pydantic** :
+  - schémas stricts pour les entrées/sorties,
+  - documentation automatique de l’API,
+  - génération de clients possible.
+
+Une variable de configuration `LLM_PROVIDER` permet de choisir dynamiquement entre :
+
+- `"openai"`
+- `"gemini"`
+- `"ollama"`
+
+Cette stratégie **multi-provider** apporte :
+
+- robustesse (fallback en cas d’indisponibilité d’un provider),
+- flexibilité (choix selon la tâche, le coût, la vitesse),
+- indépendance vis-à-vis d’un seul acteur.
+
+#### Frontend : Vue.js / Nuxt 3 et Tailwind CSS
+
+Le frontend repose sur **Nuxt 3** :
+
+- structure modulaire moderne,
+- rendu côté serveur (SSR) + hydratation sélective,
+- parfait pour une application de gestion documentaire.
+
+Les principales caractéristiques :
+
+- **Vue 3 + Composition API**
+  - logique métier mutualisée dans des `composables`,
+  - meilleure réutilisabilité,
+  - code plus lisible et maintenable.
+
+- **Tailwind CSS**
+  - design responsive,
+  - prototypage rapide d’interfaces propres,
+  - cohérence visuelle sur l’ensemble de l’application.
+
+- **Composants métier spécialisés** :
+  - `ImageUploader` : upload multiple, drag & drop, prise de photo, prévisualisation, suppression.
+  - `BiblioNoticeDisplay` : visualisation de la notice enrichie, actions contextuelles.
+  - `BiblioNoticeForm` : édition détaillée de chaque champ avec validation en temps réel.
+
+---
+
+## 3.4 Phase 1 : Conception et développement des API
+
+### 3.4.1 API principale d’extraction bibliographique
+
+L’API principale (FastAPI, port 8000) est le **cœur IA** du système :
+
+- elle orchestre les **traitements multi-modaux** (images + texte),
+- elle applique un **pipeline unifié** qui :
+  - traite simultanément toutes les sources d’information,
+  - fusionne les résultats,
+  - résout les éventuelles contradictions en appliquant des règles métier (ex. priorité au champ le plus lisible, vérification croisée entre images).
+
+Le modèle de données `BiblioNotice` :
+
+- encapsule la complexité du domaine,
+- est implémenté en **Pydantic** pour :
+  - garantir l’intégrité des données,
+  - faciliter l’interopérabilité avec les systèmes bibliographiques ABES existants.
+
+---
+
+### 3.4.2 Architecture de proxy et orchestration des services
+
+Le **proxy** (FastAPI, port 8100) joue le rôle de :
+
+- **point d’entrée unique** pour toutes les fonctionnalités d’enrichissement,
+- **abstraction** des différences techniques entre les services spécialisés.
+
+Il :
+
+- reçoit les requêtes du frontend (par ex. “enrichir cette notice avec des sujets RAMEAU”),
+- route vers l’API spécialisée correspondante (8001, 8002, 8066…),
+- harmonise les réponses (format, structure, gestion d’erreurs),
+- surveille les temps de réponse et peut adapter le comportement selon la charge.
+
+Résultat :
+
+- le frontend interagit avec **une seule API homogène**,
+- les nouveaux services peuvent être ajoutés **sans changer le frontend**,
+- la fiabilité et la performance globale sont **centralisées et contrôlées**.
+
+---
+
+## 3.5 Phase 2 : Développement de l’application web
+
+### 3.5.1 Architecture frontend et composants Vue.js / Nuxt
+
+L’application web de catalogage est construite avec **Nuxt 3** (Vue 3 + Composition API) :
+
+- séparation claire :
+  - logique métier (`composables`),
+  - état applicatif,
+  - composants d’interface.
+- rendu côté serveur (SSR) pour de meilleures performances en environnement professionnel.
+
+#### Composants principaux
+
+- **`ImageUploader`**
+  - drag & drop,
+  - prise de photo via l’API caméra,
+  - validation de taille et format,
+  - prévisualisation et suppression.
+
+- **`BiblioNoticeDisplay`**
+  - affichage structuré des notices,
+  - boutons d’action (édition, enrichissement, export futur).
+
+- **`BiblioNoticeForm`**
+  - édition détaillée avec validation en temps réel,
+  - gestion de listes (auteurs, sujets, entités…).
+
+#### Modals d’enrichissement
+
+Trois modals principaux :
+
+- enrichissement **genres/formes**,
+- enrichissement **entités géographiques**,
+- enrichissement **sujets RAMEAU**.
+
+Chaque modal :
+
+- interroge l’API IA,
+- affiche les propositions,
+- permet de rechercher manuellement dans **IdRef** (via iframe ou appels directs),
+- offre des boutons “Accepter / Refuser / Remplacer”.
+
+#### Gestion d’état réactive
+
+- L’état de la notice et des enrichissements en cours est géré de façon **centralisée**.
+- Les mises à jour sont propagées automatiquement via le système réactif de Vue.
+- Les `computed` optimisent les recalculs et évitent les rerenders inutiles.
+
+---
+
+### 3.5.2 Fonctionnalités transversales : authentification, export, persistance
+
+#### Authentification et sessions
+
+- Composable `useAuth()` avec :
+  - identifiants de démonstration (`toto`/`toto`),
+  - gestion de session via **cookies sécurisés** (durée de vie 7 jours),
+  - middleware Nuxt :
+    - protège les routes,
+    - redirige vers `/login` si non authentifié.
+
+#### Gestion de l’état temporaire
+
+- Les notices en cours d’édition,
+- les enrichissements en attente de validation,
+- les configurations temporaires
+
+sont stockés dans des **objets réactifs** synchronisés avec l’interface, avec nettoyage automatique lors de la fermeture des modals ou des changements de page.
+
+---

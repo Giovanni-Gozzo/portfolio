@@ -9,7 +9,7 @@ const person = {
     role:      'Alternant Data Scientist',
     avatar:    '/images/avatar.jpg',
     location:  'Europe/Paris',
-    languages: ['Francais', 'Anglais']  // optional: Leave the array empty if you don't want to display languages
+    languages: ['Francais', 'Anglais']
 }
 
 const newsletter = {
@@ -51,7 +51,7 @@ const home = {
     title: `Portfolio de ${person.name}`,
     description: `Site web de portfolio présentant mon travail en tant qu' ${person.role}`,
     headline: <>Étudiant / Data Scientist</>,
-    subline: <>Je suis Giovanni, alternant Data-Scientist chez <InlineCode>ABES</InlineCode> passionné par la data science et l'IA.<br/> À mes heures perdues, j'approfondis mes connaissances en deep learning, machine learning plus largement dans l'IA pour développer des solutions innovantes.</>
+    subline: <>Je suis Giovanni, alternant Data-Scientist chez <InlineCode>Airbus</InlineCode> passionné par la data science et l'IA.<br/> À mes heures perdues, j'approfondis mes connaissances en deep learning, machine learning plus largement dans l'IA pour développer des solutions innovantes.</>
 }
 
 const about = {
@@ -71,7 +71,7 @@ const about = {
     intro: {
         display: true,
         title: 'Introduction',
-        description: <>Je suis Giovanni, étudiant en BUT Informatique et alternant Data-Scientist. Je me vois évoluer dans le domaine de la data, en me spécialisant davantage en data science et intelligence artificielle. Avec mes compétences en machine learning, big data et NLP, je souhaite contribuer à des projets innovants, développer des solutions concrètes et continuer à approfondir mes connaissances pour devenir expert dans ce domaine.
+        description: <>Je suis Giovanni, étudiant en Mastére et alternant Data-Scientist. Je me vois évoluer dans le domaine de la data, en me spécialisant davantage en data science et intelligence artificielle. Avec mes compétences en machine learning, big data et NLP, je souhaite contribuer à des projets innovants, développer des solutions concrètes et continuer à approfondir mes connaissances pour devenir expert dans ce domaine.
 
 
 
@@ -81,12 +81,30 @@ const about = {
 </>
     },
     work: {
-        display: true, // set to false to hide this section
+        display: true,
         title: 'Expérience Professionnelle',
         experiences: [
             {
+                company: 'Airbus',
+                timeframe: 'Septembre 2025 - Présent',
+                role: 'Alternant Data-Scientist – Qualité',
+                achievements: [
+                    <>Analyse NLP des « logbooks » pilotes (notes de fin de vol) afin d’identifier, regrouper et suivre les
+                        problèmes récurrents sur les avions livrés.</>,
+                    <>Mise en place de pipelines de clustering thématique avec BERTopic : embeddings, réduction de
+                        dimensionnalité et algorithmes de regroupement pour structurer les retours terrain.</>,
+                    <>Classification automatique des incidents dans des catégories existantes et création de nouvelles
+                        catégories pour détecter l’émergence de problèmes jusque-là non répertoriés.</>,
+                    <>Conception de tableaux de bord et courbes d’analyse permettant de suivre l’évolution des problèmes
+                        (par exemple sur les avions de moins de 3 mois) et d’identifier les hausses de fréquence.</>,
+                    <>Collaboration avec les équipes qualité et les sections techniques pour prioriser les actions
+                        correctives et comprendre les causes racines des incidents identifiés.</>
+                ],
+                images: []
+            },
+            {
                 company: 'ABES',
-                timeframe: 'Septembre 2024 - Présent',
+                timeframe: 'Septembre 2024 - Août 2025',
                 role: 'Alternant Data-Scientist',
                 achievements: [
                     <>Développement de modèles de machine learning (KNN, Régression Logistique, SVM, Random Forest) pour
@@ -121,8 +139,12 @@ const about = {
         title: 'Formation',
         institutions: [
             {
+                name: 'Mastére Ynov Toulouse',
+                description: <>Mastère expert en Intelligence Artificielle </>
+            },
+            {
                 name: 'IUT Montpellier-Sète',
-                description: <>Actuellement étudiant en BUT Informatique, avec une spécialisation en RACDV (Réalisation
+                description: <>BUT Informatique, avec une spécialisation en RACDV (Réalisation
                     d'applications, conception, développement et validation de systèmes).</>,
             },
             {
@@ -169,6 +191,32 @@ const about = {
                         width: 16,
                         height: 9
                     },
+                ]
+            },
+            {
+                title: 'Modélisation thématique & BERTopic',
+                description: <>Mise en place de pipelines BERTopic pour regrouper et analyser les retours terrain :
+                    création de topics, suivi de leur évolution dans le temps et détection de nouveaux problèmes.</>,
+                images: [
+                    {
+                        src: '/images/projects/machine-learning/topics.png',
+                        alt: 'Visualisation de clusters de topics issus d’un modèle BERTopic.',
+                        width: 16,
+                        height: 9
+                    }
+                ]
+            },
+            {
+                title: 'Clustering & Réduction de dimensionnalité',
+                description: <>Utilisation de techniques de clustering (HDBSCAN, K-Means) et de réduction de
+                    dimensionnalité (UMAP, PCA) pour explorer, structurer et visualiser les problèmes récurrents des avions livrés.</>,
+                images: [
+                    {
+                        src: '/images/projects/machine-learning/umap.png',
+                        alt: 'Projection UMAP montrant des clusters de données issues de logbooks.',
+                        width: 16,
+                        height: 9
+                    }
                 ]
             },
             {
